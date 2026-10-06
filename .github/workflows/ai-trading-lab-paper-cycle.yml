@@ -1,0 +1,25 @@
+name: AI Trading Lab — Paper Cycle
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 16 * * 1-5"
+
+jobs:
+  paper-cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Run paper trading cycle
+        env:
+          PAPER_CYCLE_URL: https://ai-trading-lab-2026.floot.app/api/paper_cycle
+        run: |
+          set -euo pipefail
+          echo "Calling AI Trading Lab paper cycle..."
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "$PAPER_CYCLE_URL"
+          echo
+          echo "Paper cycle request completed."
