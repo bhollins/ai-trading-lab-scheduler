@@ -13,10 +13,15 @@ jobs:
     steps:
       - name: Run paper trading cycle
         env:
-          PAPER_CYCLE_URL: https://ai-trading-lab-2026.floot.app/api/paper_cycle
+          PAPER_CYCLE_URL: https://ai-trading-lab-2026.floot.app/_api/paper_cycle
         run: |
           set -euo pipefail
           echo "Calling AI Trading Lab paper cycle..."
-          curl --fail-with-body --silent --show-error             --request POST             --header "Content-Type: application/json"             --data '{}'             "$PAPER_CYCLE_URL"
-          echo
-          echo "Paper cycle request completed."
+          response="$(curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "$PAPER_CYCLE_URL")"
+          echo "$response"
+          echo "$response" | grep -q '"ok":true'
+          echo "Paper cycle endpoint responded successfully."
