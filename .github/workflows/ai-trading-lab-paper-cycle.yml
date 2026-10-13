@@ -1,9 +1,11 @@
-name: AI Trading Lab — Paper Cycle
+name: AI Trading Lab — Ray Paper Cycle (Stocks)
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 16 * * 1-5"
+    - cron: "*/15 9-15 * * 1-5"
+      timezone: "America/New_York"
+    - cron: "0 16 * * 1-5"
       timezone: "America/New_York"
 
 jobs:
@@ -11,17 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Run paper trading cycle
+      - name: Run Ray strategy paper cycle for ETFs
         env:
-          PAPER_CYCLE_URL: https://ai-trading-lab-2026.floot.app/_api/paper_cycle
+          PAPER_CYCLE_URL: https://ai-trading-lab-2026.floot.app/_api/ray_paper_cycle
         run: |
           set -euo pipefail
-          echo "Calling AI Trading Lab paper cycle..."
+          echo "Calling Ray strategy paper cycle for SPY, QQQ, GLD, USO..."
           response="$(curl --fail-with-body --silent --show-error \
             --request POST \
             --header "Content-Type: application/json" \
-            --data '{}' \
+            --data '{"symbols":["SPY","QQQ","GLD","USO"]}' \
             "$PAPER_CYCLE_URL")"
           echo "$response"
           echo "$response" | grep -q '"ok":true'
-          echo "Paper cycle endpoint responded successfully."
+          echo "Ray ETF paper cycle endpoint responded successfully."
