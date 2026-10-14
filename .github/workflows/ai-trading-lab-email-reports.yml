@@ -3,10 +3,9 @@ name: AI Trading Lab — Email Paper Reports
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 8 * * *"
-      timezone: "America/New_York"
-    - cron: "0 20 * * *"
-      timezone: "America/New_York"
+    # GitHub cron is UTC. Run at both possible UTC hours for 8 AM/8 PM
+    # America/New_York across daylight-saving transitions, then filter below.
+    - cron: "0 0,1,12,13 * * *"
 
 jobs:
   email-paper-report:
@@ -19,6 +18,13 @@ jobs:
           REPORT_JOB_TOKEN: ${{ secrets.REPORT_JOB_TOKEN }}
         run: |
           set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            eastern_hour="$(TZ=America/New_York date +%H)"
+            if [ "$eastern_hour" != "08" ] && [ "$eastern_hour" != "20" ]; then
+              echo "Scheduled UTC slot does not match 8 AM/8 PM Eastern; skipping."
+              exit 0
+            fi
+          fi
           if [ -z "${REPORT_JOB_TOKEN}" ]; then
             echo "Missing GitHub repository secret REPORT_JOB_TOKEN."
             exit 1
