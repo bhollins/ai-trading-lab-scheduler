@@ -1,0 +1,34 @@
+name: AI Trading Lab — Email Paper Reports
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * *"
+      timezone: "America/New_York"
+    - cron: "0 20 * * *"
+      timezone: "America/New_York"
+
+jobs:
+  email-paper-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send broker-confirmed paper-trading report
+        env:
+          REPORT_URL: https://ai-trading-lab-2026.floot.app/_api/ray_report
+          REPORT_JOB_TOKEN: ${{ secrets.REPORT_JOB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${REPORT_JOB_TOKEN}" ]; then
+            echo "Missing GitHub repository secret REPORT_JOB_TOKEN."
+            exit 1
+          fi
+          response="$(curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer ${REPORT_JOB_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "${REPORT_URL}")"
+          echo "$response"
+          echo "$response" | grep -q '"ok":true'
+          echo "Paper report email accepted by AgentMail."
