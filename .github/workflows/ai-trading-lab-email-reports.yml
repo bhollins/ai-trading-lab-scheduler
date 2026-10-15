@@ -3,9 +3,12 @@ name: AI Trading Lab — Email Paper Reports
 on:
   workflow_dispatch:
   schedule:
-    # GitHub cron is UTC. Run at both possible UTC hours for 8 AM/8 PM
-    # America/New_York across daylight-saving transitions, then filter below.
-    - cron: "0 0,1,12,13 * * *"
+    # GitHub cron is UTC. Separate expressions let the job identify the intended
+    # UTC slot and convert that scheduled time to Eastern even if GitHub starts late.
+    - cron: "0 0 * * *"
+    - cron: "0 1 * * *"
+    - cron: "0 12 * * *"
+    - cron: "0 13 * * *"
 
 jobs:
   email-paper-report:
@@ -16,12 +19,23 @@ jobs:
         env:
           REPORT_URL: https://ai-trading-lab-2026.floot.app/_api/ray_report
           REPORT_JOB_TOKEN: ${{ secrets.REPORT_JOB_TOKEN }}
+          SCHEDULE_CRON: ${{ github.event.schedule }}
         run: |
           set -euo pipefail
           if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
-            eastern_hour="$(TZ=America/New_York date +%H)"
-            if [ "$eastern_hour" != "08" ] && [ "$eastern_hour" != "20" ]; then
-              echo "Scheduled UTC slot does not match 8 AM/8 PM Eastern; skipping."
+            utc_hour="$(printf '%s' "${SCHEDULE_CRON}" | awk '{print $2}')"
+            if ! [[ "${utc_hour}" =~ ^[0-9]{1,2}$ ]]; then
+              echo "Could not identify scheduled UTC hour; refusing to send."
+              exit 1
+            fi
+            # Use the scheduled UTC slot, not the runner's current hour.
+            # GitHub may start scheduled workflows late; this avoids silently
+            # dropping a report just because the runner started after 8 AM/PM ET.
+            utc_date="$(date -u +%F)"
+            scheduled_epoch="$(date -u -d "${utc_date} ${utc_hour}:00" +%s)"
+            eastern_hour="$(TZ=America/New_York date -d "@${scheduled_epoch}" +%H)"
+            if [ "${eastern_hour}" != "08" ] && [ "${eastern_hour}" != "20" ]; then
+              echo "This UTC slot is not the 8 AM/8 PM Eastern slot today; skipping."
               exit 0
             fi
           fi
@@ -35,6 +49,6 @@ jobs:
             --header "Content-Type: application/json" \
             --data '{}' \
             "${REPORT_URL}")"
-          echo "$response"
-          echo "$response" | grep -q '"ok":true'
+          echo "${response}"
+          echo "${response}" | grep -q '"ok":true'
           echo "Paper report email accepted by AgentMail."
