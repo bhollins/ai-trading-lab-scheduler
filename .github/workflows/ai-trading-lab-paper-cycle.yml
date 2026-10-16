@@ -1,6 +1,8 @@
 name: AI Trading Lab — Ray Paper Cycle (Stocks)
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: "*/15 9-15 * * 1-5"
@@ -28,8 +30,8 @@ jobs:
             --request POST \
             --header "Authorization: Bearer ${REPORT_JOB_TOKEN}" \
             --header "Content-Type: application/json" \
-            --data '{"symbols":["SPY","QQQ","GLD","USO"]}' \
+            --data '{"symbols":["SPY","QQQ","GLD","USO"],"dryRun":true}' \
             "${PAPER_CYCLE_URL}")"
           echo "${response}"
           echo "${response}" | grep -q '"ok":true'
-          echo "Authenticated Ray ETF paper cycle completed."
+          echo "Authenticated Ray ETF DRY RUN completed; no orders should be submitted."
