@@ -1,8 +1,6 @@
 name: AI Trading Lab — Ray Paper Cycle (Bitcoin)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: "0 * * * *"
@@ -28,8 +26,8 @@ jobs:
             --request POST \
             --header "Authorization: Bearer ${REPORT_JOB_TOKEN}" \
             --header "Content-Type: application/json" \
-            --data '{"symbols":["BTC/USD"],"dryRun":true}' \
+            --data '{"symbols":["BTC/USD"]}' \
             "${PAPER_CYCLE_URL}")"
           echo "${response}"
           echo "${response}" | grep -q '"ok":true'
-          echo "Authenticated Ray Bitcoin DRY RUN completed; no orders should be submitted."
+          echo "Authenticated Ray Bitcoin paper cycle completed."
