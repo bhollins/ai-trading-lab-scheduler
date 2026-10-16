@@ -11,17 +11,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Run Ray Bitcoin paper cycle
+      - name: Run authenticated Ray Bitcoin paper cycle
         env:
-          PAPER_CYCLE_URL: https://ai-trading-lab-2026.floot.app/_api/ray_paper_cycle
+          PAPER_CYCLE_URL: https://ai-trading-lab-2026.floot.app/_api/ray_cycle_cron
+          REPORT_JOB_TOKEN: ${{ secrets.REPORT_JOB_TOKEN }}
         run: |
           set -euo pipefail
-          echo "Calling Ray strategy paper cycle for BTC/USD..."
+          if [ -z "${REPORT_JOB_TOKEN}" ]; then
+            echo "Missing GitHub repository secret REPORT_JOB_TOKEN."
+            exit 1
+          fi
+          echo "Calling authenticated Ray strategy paper cycle for BTC/USD..."
           response="$(curl --fail-with-body --silent --show-error \
             --request POST \
+            --header "Authorization: Bearer ${REPORT_JOB_TOKEN}" \
             --header "Content-Type: application/json" \
             --data '{"symbols":["BTC/USD"]}' \
-            "$PAPER_CYCLE_URL")"
-          echo "$response"
-          echo "$response" | grep -q '"ok":true'
-          echo "Ray Bitcoin paper cycle endpoint responded successfully."
+            "${PAPER_CYCLE_URL}")"
+          echo "${response}"
+          echo "${response}" | grep -q '"ok":true'
+          echo "Authenticated Ray Bitcoin paper cycle completed."
