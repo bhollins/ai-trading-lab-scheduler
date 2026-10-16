@@ -1,14 +1,9 @@
 name: AI Trading Lab — Email Paper Reports
 
 on:
+  # Automatic report schedule paused at the user's request.
+  # Manual workflow_dispatch remains available if a report is wanted later.
   workflow_dispatch:
-  schedule:
-    # GitHub cron is UTC. Separate expressions let the job identify the intended
-    # UTC slot and convert that scheduled time to Eastern even if GitHub starts late.
-    - cron: "0 0 * * *"
-    - cron: "0 1 * * *"
-    - cron: "0 12 * * *"
-    - cron: "0 13 * * *"
 
 jobs:
   email-paper-report:
