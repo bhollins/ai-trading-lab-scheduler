@@ -1,19 +1,15 @@
-name: AI Trading Lab — Ray Paper Cycle
+name: AI Trading Lab — Ray Paper Cycle (Stocks)
 
 on:
   workflow_dispatch:
   schedule:
-    # ETF cycle cadence follows New York time; the hourly crypto cycle is UTC.
     - cron: "*/15 9-15 * * 1-5"
       timezone: "America/New_York"
     - cron: "0 16 * * 1-5"
       timezone: "America/New_York"
-    - cron: "0 * * * *"
-      timezone: "Etc/UTC"
 
 jobs:
   paper-cycle:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule != '0 * * * *' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -27,6 +23,7 @@ jobs:
             echo "Missing GitHub repository secret REPORT_JOB_TOKEN."
             exit 1
           fi
+          echo "Calling authenticated Ray strategy paper cycle for SPY, QQQ, GLD, USO..."
           response="$(curl --fail-with-body --silent --show-error \
             --request POST \
             --header "Authorization: Bearer ${REPORT_JOB_TOKEN}" \
@@ -35,29 +32,4 @@ jobs:
             "${PAPER_CYCLE_URL}")"
           echo "${response}"
           echo "${response}" | grep -q '"ok":true'
-          echo "Authenticated ETF paper cycle completed."
-
-  crypto-cycle:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '0 * * * *' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Run authenticated BTC/USD hourly paper cycle
-        env:
-          PAPER_CYCLE_URL: https://ai-trading-lab-2026.floot.app/_api/ray_cycle_cron
-          REPORT_JOB_TOKEN: ${{ secrets.REPORT_JOB_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ -z "${REPORT_JOB_TOKEN}" ]; then
-            echo "Missing GitHub repository secret REPORT_JOB_TOKEN."
-            exit 1
-          fi
-          response="$(curl --fail-with-body --silent --show-error \
-            --request POST \
-            --header "Authorization: Bearer ${REPORT_JOB_TOKEN}" \
-            --header "Content-Type: application/json" \
-            --data '{"symbols":["BTC/USD"]}' \
-            "${PAPER_CYCLE_URL}")"
-          echo "${response}"
-          echo "${response}" | grep -q '"ok":true'
-          echo "Authenticated BTC/USD paper cycle completed."
+          echo "Authenticated Ray ETF paper cycle completed."
