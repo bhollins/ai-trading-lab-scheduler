@@ -1,6 +1,8 @@
 name: AI Trading Lab — Email Paper Reports
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
   schedule:
     # GitHub cron is UTC. Separate expressions let the job identify the intended
